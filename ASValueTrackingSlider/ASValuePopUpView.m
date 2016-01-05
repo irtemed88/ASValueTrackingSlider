@@ -34,10 +34,10 @@ NSString *const SliderFillColorAnim = @"fillColor";
     BOOL _shouldAnimate;
     CFTimeInterval _animDuration;
     
-    NSMutableAttributedString *_attributedString;
     CAShapeLayer *_pathLayer;
     
-    CATextLayer *_textLayer;
+    UILabel *_textLabel;
+    UILabel *_prototypeSizingLabel;
     CGFloat _arrowCenterOffset;
     
     // never actually visible, its purpose is to interpolate color values for the popUpView color animation
@@ -66,19 +66,15 @@ NSString *const SliderFillColorAnim = @"fillColor";
         _arrowLength = 13.0;
         _widthPaddingFactor = 1.15;
         _heightPaddingFactor = 1.1;
-        
-        _textLayer = [CATextLayer layer];
-        _textLayer.alignmentMode = kCAAlignmentCenter;
-        _textLayer.anchorPoint = CGPointMake(0, 0);
-        _textLayer.contentsScale = [UIScreen mainScreen].scale;
-        _textLayer.actions = @{@"contents" : [NSNull null]};
+
+        _textLabel = [[UILabel alloc] init];
+        _textLabel.textAlignment = NSTextAlignmentCenter;
+        _textLabel.layer.anchorPoint = CGPointMake(0, 0);
         
         _colorAnimLayer = [CAShapeLayer layer];
         
         [self.layer addSublayer:_colorAnimLayer];
-        [self.layer addSublayer:_textLayer];
-        
-        _attributedString = [[NSMutableAttributedString alloc] initWithString:@" " attributes:nil];
+        [self addSubview:_textLabel];        
     }
     return self;
 }
@@ -108,23 +104,17 @@ NSString *const SliderFillColorAnim = @"fillColor";
 
 - (void)setTextColor:(UIColor *)color
 {
-    _textLayer.foregroundColor = color.CGColor;
+    _textLabel.textColor = color;
 }
 
 - (void)setFont:(UIFont *)font
 {
-    [_attributedString addAttribute:NSFontAttributeName
-                              value:font
-                              range:NSMakeRange(0, [_attributedString length])];
-    
-    _textLayer.font = (__bridge CFTypeRef)(font.fontName);
-    _textLayer.fontSize = font.pointSize;
+    _textLabel.font = font;
 }
 
 - (void)setText:(NSString *)string
 {
-    [[_attributedString mutableString] setString:string];
-    _textLayer.string = string;
+    _textLabel.text = string;
 }
 
 // set up an animation, but prevent it from running automatically
@@ -196,10 +186,16 @@ NSString *const SliderFillColorAnim = @"fillColor";
 
 - (CGSize)popUpSizeForString:(NSString *)string
 {
-    [[_attributedString mutableString] setString:string];
+    if (!_prototypeSizingLabel) {
+        _prototypeSizingLabel = [[UILabel alloc] init];
+        _prototypeSizingLabel.font = _textLabel.font;
+    }
+    _prototypeSizingLabel.text = string;
+
+    CGSize size = [_prototypeSizingLabel intrinsicContentSize];
     CGFloat w, h;
-    w = ceilf([_attributedString size].width * _widthPaddingFactor);
-    h = ceilf(([_attributedString size].height * _heightPaddingFactor) + _arrowLength);
+    w = ceilf(size.width * _widthPaddingFactor);
+    h = ceilf((size.height * _heightPaddingFactor) + _arrowLength);
     return CGSizeMake(w, h);
 }
 
@@ -304,12 +300,12 @@ NSString *const SliderFillColorAnim = @"fillColor";
 - (void)layoutSubviews
 {
     [super layoutSubviews];
-    
-    CGFloat textHeight = [_attributedString size].height;
+
+    CGSize size = [_textLabel intrinsicContentSize];
     CGRect textRect = CGRectMake(self.bounds.origin.x,
-                                 (self.bounds.size.height-_arrowLength-textHeight)/2,
-                                 self.bounds.size.width, textHeight);
-    _textLayer.frame = CGRectIntegral(textRect);
+                                 (self.bounds.size.height-_arrowLength-size.height)/2,
+                                 self.bounds.size.width, size.height);
+    _textLabel.frame = CGRectIntegral(textRect);
 }
 
 static UIColor* opaqueUIColorFromCGColor(CGColorRef col)
