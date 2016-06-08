@@ -56,6 +56,9 @@
 // use this enum to change the animation style when the popup view shows and hides
 @property (nonatomic) ASValuePopUpViewPresentationAnimationType popUpViewPresentationAnimationType; // defaults to "bounce"
 
+// set this flag to move the slider thumb to wherever the user taps on the slider.
+@property (nonatomic) BOOL trackUserTouchesOnProgressBar;   // (defaults to NO)
+
 // when setting max FractionDigits the min value is automatically set to the same value
 // this ensures that the PopUpView frame maintains a consistent width
 - (void)setMaxFractionDigitsDisplayed:(NSUInteger)maxDigits;

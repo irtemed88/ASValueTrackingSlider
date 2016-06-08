@@ -214,6 +214,7 @@
 - (void)setup
 {
     _autoAdjustTrackColor = YES;
+    _trackUserTouchesOnProgressBar = NO;
     _valueRange = self.maximumValue - self.minimumValue;
     _popUpViewAlwaysOn = NO;
     _popUpViewPresentationAnimationType = ASValuePopUpViewPresentationAnimationTypeBounce;
@@ -382,8 +383,20 @@
 - (BOOL)beginTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event
 {
     BOOL begin = [super beginTrackingWithTouch:touch withEvent:event];
-    if (begin && !self.popUpViewAlwaysOn && self.popUpViewEnabled) [self _showPopUpView];
-    return begin;
+    if (!begin && _trackUserTouchesOnProgressBar) {
+        // Move the slider to wherever the touch occurred.
+        CGPoint touchLocation = [touch locationInView:self];
+        float percentage = (touchLocation.x / self.frame.size.width);
+        float value = percentage * (self.maximumValue - self.minimumValue);
+        [self setValue:value animated:NO];
+    }
+
+    BOOL shouldBeginTracking = (begin || _trackUserTouchesOnProgressBar);
+    if (shouldBeginTracking && !self.popUpViewAlwaysOn && self.popUpViewEnabled) {
+        [self _showPopUpView];
+    }
+
+    return shouldBeginTracking;
 }
 
 - (BOOL)continueTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event
